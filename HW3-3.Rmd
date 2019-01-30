@@ -1,0 +1,82 @@
+---
+title: "STAT425-HW3 Jinran Yang"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##3.(a)
+```{r cars}
+library(faraway)
+lm<-lm(total~takers+ratio+salary, data = sat)
+summary(lm)
+```
+As we can see from the above, the p-value is smaller than 0.05 which means the model is significant. And the R-squared is 0.8239 which means this model can explain 82.39% variance of average total SAT score. This model performs well.
+
+##(b)
+
+```{r}
+lm1<-lm(total~takers+ratio, data = sat)
+anova(lm1,lm)
+```
+I set the null hypothesis as teachers' salary has a zero effect on the SAT scores. And alernative hypothesis as teachers' salary has a effect on the SAT score. According to the result above, the P-value of teachers' salary has a positive effect on the SAT scores is 0.01449/2, which is 0.007245<0.01. Therefore, we reject the null hypothesis.
+Besides, we can directly compute the t-value of teachers' salary effect according to the result of `summary(lm)`, t =2.5525/1.0045=2.541065. And then, we can calculate the p-value by `1-pt(2.540984,46)`= 0.007245726 since we want one-side p-value. The value is exactly the same as the result above(0.01449/2).
+
+
+##(c)
+
+```{r}
+lm2<-lm(total~takers+salary, data = sat)
+anova(lm2,lm)
+```
+I set the null hypothesis as ratio has a zero effect on the SAT scores and alernative hypothesis as ratio has a effect on the SAT scores. According to the result above, the P-value of ratio have zero effect on the SAT scores is 0.03388 < 0.05. Therefore, we reject the null hypothesis and therefore,ratio has a effect on the SAT scores.
+
+
+
+##(d)
+```{r}
+lm3<-lm(total~1, data = sat)
+anova(lm3,lm)
+```
+The hypothesis means salary, ratio and takers all have zero effect on the SAT scores. Model 1 test how the average of total SAT scrore explain the variatoin of the total SAT score. Besides, We can use this method to test whether any of these three predictors are significance in the mode. The P-value above is significant which means at least one of the three predictor are significant to the total SAT score.
+
+The hypothesis means salary, ratio and takers all have zero effect on the SAT scores. Model 1 test how the average of total SAT scrore explain the variatoin of the total SAT score. Besides, We can use this method to test whether any of these three predictors are significance in the mode. The P-value above is significant which means at least one of the three predictor are significant to the total SAT score.
+
+The hypothesis means salary, ratio and takers all have zero effect on the SAT scores. Model 1 test how the average of total SAT scrore explain the variatoin of the total SAT score. Besides, We can use this method to test whether any of these three predictors are significance in the mode. The P-value above is significant which means at least one of the three predictor are significant to the total SAT score.
+
+
+##(e)
+```{r}
+summary(lm)
+#95%  CI
+CI<-c(lm$coefficients[4]-qt(0.975,46)*1.0045,lm$coefficients[4]+qt(0.975,46)*1.0045)
+CI#First is the lower bound, second is the upper bound
+CI2<-c(lm$coefficients[4]-qt(0.995,46)*1.0045,lm$coefficients[4]+qt(0.995,46)*1.0045)
+CI2#First is the lower bound, second is the upper bound
+```
+The 95% confidence interval doesn't contain 0, however the 99% confidence interval contains 0. Therefore, the salary effect is siginificant under $alpha = 0.05$, but not $alpha = 0.01$. The p-value of the 'salary' correspondingly, is 0.015 $(0.01<0.015<0.05)$.
+
+##(f)
+```{r}
+CI<-c(lm$coefficients[4]-qt(0.975,46)*1.0045,lm$coefficients[4]+qt(0.975,46)*1.0045)
+CI
+CI3<-c(lm$coefficients[3]-qt(0.975,46)*2.1215,lm$coefficients[3]+qt(0.975,46)*2.1215)
+CI3
+```
+
+##(g)
+```{r}
+lm4<-lm(total~takers+ratio+salary+expend, data = sat)
+summary(lm4)
+```
+
+As we can see from the result above, only the takers is significant at the significance level ?? = 0.05. R-squared is a little higher (0.8246) than the previous model (0.8239). The goodness of fit of the new model doesn't perform better than the previous model.
+
+##(h)
+```{r}
+lm5<-lm(total~takers, data = sat)
+anova(lm5,lm4)
+```
+From the test above, we can tell that at least one of the ratio,salary and expend
+have effect on total SAT score. And based on the result of the previous tests, all of them have an effects on the response.
