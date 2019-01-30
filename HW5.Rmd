@@ -1,0 +1,261 @@
+---
+title: "STAT425_HW5_Jinran Yang"
+author: "Jinran Yang"
+date: "11/9/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+###1.
+```{r}
+library(faraway)
+library(MASS)
+attach(sat)
+names(sat)
+lm<-lm(total~takers+ratio+salary,data = sat)
+summary(lm)
+rlm<-rlm(total~takers+ratio+salary,data = sat)
+summary(rlm)
+
+par(mfrow=c(2,2))
+plot(lm)
+which(cooks.distance(lm)>=1)
+
+par(mfrow=c(2,2))
+plot(rlm)
+which(cooks.distance(rlm)>=1)
+```
+As we can see, the result of two method are very close to each other. The coefficients estimated by two models are quite similiar to each other,
+```{r}
+#Huber's robust regression, takers
+pt(13.6101,46,lower.tail=F)
+```
+
+```{r}
+#Huber's robust regression, ratio 
+pt(2.9596,46,lower.tail=F)
+
+```
+
+```{r}
+#Huber's robust regression, salary
+pt(3.0049,46,lower.tail=F)
+```
+As we can see from above, `takers`, `ratio` and `salary` are all significent (their P-value are all smaller than 0.05).
+```{r}
+rss <- sum((total - rlm$fitted.values) ^ 2)  # residual sum of squares
+tss <- sum((total - mean(total)) ^ 2)  # total sum of squares
+rsq <- 1 - rss/tss
+rsq 
+```
+The R^2 of Huber's robust regression result is 0.8218491 which is quite close to that of the ordinary least squares (0.8239); Based on the cook's distance, there is no influential point in both model. Overall, the results obtained by two models are similar.
+
+   
+####2.
+```{r}
+#(a)
+set.seed(1) 
+I<-diag(5) 
+J<-matrix(1,5,5) 
+Sigma<-0.8*I+0.2*J 
+Sigma
+X<-mvrnorm(n=100,rep(0,5),Sigma)
+dim(X)
+
+#(b)
+A_element<-vector(length = 100)
+for (i in 1:100){
+ A_element[i]<-sqrt(i)
+}
+A<-diag(x = A_element,nrow = 100,ncol = 100)
+
+set.seed(1) 
+error<-mvrnorm(n=1,mu=rep(0,100),A )
+
+beta<-matrix(c(1,-1,1,-1,1),ncol = 1)
+
+Y=1+X %*% beta +error
+
+#least square
+beta_LS<-solve(t(X)%*%X)%*%t(X)%*%Y
+beta_GLS<-solve(t(X)%*%solve(A)%*%X)%*%t(X)%*%solve(A)%*%Y
+
+MSE<-function(x,beta){
+  MSE1<-0
+  for (i in 1:length(x)){
+    MSE1<-MSE1+(x[i]-beta[i])^2
+  }
+  return(MSE1*(1/length(x)))
+}
+
+MSE(beta_LS,beta)#least square
+MSE(beta_GLS,beta)#generalized least square
+```
+As we can see, the mean square error of beta estimated by generalized least squares is larger than that of beta estimated by the least squares. 
+
+```{r}
+set.seed(1)
+X_10<-list()
+for (i in 1:10){
+  X_10[[i]]<-mvrnorm(n=100,rep(0,5),Sigma,empirical = FALSE)
+}
+
+error_10<-list()
+for (i in 1:10){
+  error_10[[i]]<-mvrnorm(n=1,mu=rep(0,100),A )
+}
+
+Y_10<-list()
+for (i in 1:10){
+  Y_10[[i]]<-1+ X_10[[i]] %*% beta +error_10[[i]]
+}
+
+
+beta_LS_10<-list()
+for (i in 1:10){
+  beta_LS_10[[i]]<-solve(t(X_10[[i]])%*%X_10[[i]])%*%t(X_10[[i]])%*%Y_10[[i]]
+}
+
+beta_GLS_10<-list()
+for (i in 1:10){
+  beta_GLS_10[[i]]<-solve(t(X_10[[i]])%*%solve(A)%*%X_10[[i]])%*%t(X_10[[i]])%*%solve(A)%*%Y_10[[i]]
+}
+
+MSE_LS<-vector(length = 10)
+for (i in 1:10){
+  MSE_LS[i]<-MSE(beta_LS_10[[i]],beta)
+}
+
+AMSE_LS<-mean(MSE_LS)
+AMSE_LS#least square
+
+MSE_GLS<-vector(length = 10)
+for (i in 1:10){
+  MSE_GLS[i]<-MSE(beta_GLS_10[[i]],beta)
+}
+
+AMSE_GLS<-mean(MSE_GLS)
+AMSE_GLS#generalized least square
+```
+As we can see from the result above, the average mean squared error (over ten synthetic dataset) of beta estimated by generalized least squares is smaller than that of the beta estimated by least squares. Therefore, the generalized least squares performs better when it comes to the variance of error is not equal and the errors are uncorrelated.
+```{r}
+J1<-matrix(1,100,100) 
+B<-A+0.1*J1
+
+set.seed(1) 
+error1<-mvrnorm(n=1,mu=rep(0,100),B )
+
+Y1=1+ X %*% beta +error1
+
+#least square
+beta_LS1<-solve(t(X)%*%X)%*%t(X)%*%Y1
+beta_GLS1<-solve(t(X)%*%solve(B)%*%X)%*%t(X)%*%solve(B)%*%Y1
+
+MSE(beta_LS1,beta)#least square
+MSE(beta_GLS1,beta)#generalized least square
+```
+As we can see, the mean square error of beta estimated by generalized least squares is much more smaller than that of beta estimated by the least squares. 
+```{r}
+set.seed(1)
+
+error_10_1<-list()
+for (i in 1:10){
+  error_10_1[[i]]<-mvrnorm(n=1,mu=rep(0,100),B)
+}
+
+Y_10_1<-list()
+for (i in 1:10){
+  Y_10_1[[i]]<-1+ X_10[[i]] %*% beta +error_10_1[[i]]
+}
+
+
+beta_LS_10_1<-list()
+for (i in 1:10){
+  beta_LS_10_1[[i]]<-solve(t(X_10[[i]])%*%X_10[[i]])%*%t(X_10[[i]])%*%Y_10_1[[i]]
+}
+
+beta_GLS_10_1<-list()
+for (i in 1:10){
+  beta_GLS_10_1[[i]]<-solve(t(X_10[[i]])%*%solve(B)%*%X_10[[i]])%*%t(X_10[[i]])%*%solve(B)%*%Y_10_1[[i]]
+}
+
+MSE_LS1<-vector(length = 10)
+for (i in 1:10){
+  MSE_LS1[i]<-MSE(beta_LS_10_1[[i]],beta)
+}
+
+AMSE_LS1<-mean(MSE_LS1)
+AMSE_LS1##least square
+
+MSE_GLS1<-vector(length = 10)
+for (i in 1:10){
+  MSE_GLS1[i]<-MSE(beta_GLS_10_1[[i]],beta)
+}
+
+AMSE_GLS1<-mean(MSE_GLS1)
+AMSE_GLS1#generalized least square
+```
+The average mean squared error (over ten synthetic dataset) of beta estimated by generalized least squares is smaller than that of beta estimated by least squares.Therefore, the generalized least squares performs better when it comes to the variance of error is not equal and the error are correlated.  
+    
+####4.
+```{r}
+#(a)
+model<-lm(happy~.,data=happy)
+summary(model)
+```
+`sex` is not significant, since the p-value is larger than 0.05. So let's remove it and refit the model.
+```{r}
+model<-lm(happy~money+love+work,data=happy)
+summary(model)
+```
+`money` is not significant, since the p-value is larger than 0.05. So let's remove it and refit the model.
+```{r}
+model<-lm(happy~love+work,data=happy)
+summary(model)
+par(mfrow=c(2,2))
+plot(model)
+boxcox(model, lambda = seq(0, 3,0.1))
+```
+  
+Since 1.5 is inside the 95% CI of lambda, we choose lambda is 1.5 and we fit a new model with happy^1.5 as new dependent variable.  
+```{r}
+newmodel<-lm(happy^1.5~love + work,data=happy)
+summary(newmodel)
+par(mfrow=c(2,2))
+plot(newmodel)
+```
+As we can see the Q-Q plot looks more like a straigth line than the previous model. The R^2 is roughtly equal to the previous one. And there is no outliers. Therefore, the best model is `happly^1.5 ~ work + love`.
+```{r}
+#(b)
+attach(cornnit)
+names(cornnit)
+plot(x=nitrogen,y=yield)
+
+```
+It is not a linear trend so that we try Box-Cox transformation.  
+```{r}
+model_con<-lm(yield~nitrogen)
+boxcox(model_con, lambda = seq(0, 5,0.1))
+```
+  
+Since 2.5 is inside the 95% CI of lambda, we choose lambda is 2.5 and we fit a new model with yield^2.5 as new dependent variable.  
+```{r}
+plot(y=yield^2.5,x=nitrogen)
+```
+  
+It is still not a linear trend so that we try to transform the predictor.
+```{r}
+model_sqrt<-lm(yield^2.5~sqrt(nitrogen))
+summary(model_sqrt)
+par(mfrow=c(2,2))
+plot(model_sqrt)
+
+model_log<-lm(yield^2.5~log(nitrogen+1))
+summary(model_log)
+par(mfrow=c(2,2))
+plot(model_log)
+```
+According to the result above, the R^2 in `log_model` is 0.6856 which is larger than that of the `sqrt_model`, so with respect to the predicton, model `yield^2.5 ~ log(nitrogen + 1)` might do a better job. As for the diagnostics plot of `log_model`, all plots ,but the Scale-Location seem, look ok. 
+
