@@ -1,0 +1,171 @@
+---
+title: "STAT425_HW4 Jinran Yang"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###1.
+```{r}
+library(faraway)
+data(happy)
+lm<-lm(happy~money+work,data = happy)
+par(mfrow = c(2,2))
+plot(lm)
+
+```
+(1).As we can see from the Scale-Location plot above, the line tends to be a curve instead of a flat line, so constant variance assumption for the errors is false.  
+
+(2).As we can see from the Normal Q-Q plot above, the residuals are not a straight line so that the normality assumption is not well satisfied.  
+
+(3).
+```{r}
+which(hatvalues(lm)>(2*3/39))#2p/n
+```
+Therefore, #2,6,7 and 31 observations can be considered as the large leverage points.  
+
+(4).
+```{r}
+critval <- qt(0.05/(2*nobs(lm)), df=df.residual(lm)-1, lower=FALSE)#alpha/n
+ which(abs(rstudent(lm)) > critval)
+```
+There is no outlier.  
+
+(5)
+```{r}
+which(cooks.distance(lm)>=1)
+```
+There is no influential point. And we can also get the same result from the `Residuals and Leverage` plot, because there is no observation outside the contour line of cook's distance equal to 1.  
+
+(6) We can get the structure of the relationship using the `Residual versus Fitted` plot. As it seems that the line is not very flat, the relationship between response and the predictors may not be simply linear.  
+
+####New model
+```{r}
+lm2<-lm(happy~.,data = happy)
+par(mfrow = c(2,2))
+plot(lm2)
+```
+(1)As we can see from the Scale-Location plot above, the line become much flatter than before which means the constant variance assumption is more satisfied in this model.  
+
+(2)As we can see from the Normal Q-Q plot above, the residuals looks like a straight line so that the normality assumption is satisfied.  
+
+(3)
+```{r}
+which(hatvalues(lm2)>(2*5/39))
+```
+Therefore, #2,6,7 and #10 observations can be considered as the large leverage points.  
+
+(4)
+```{r}
+critval <- qt(0.05/(2*nobs(lm2)), df=df.residual(lm2)-1, lower=FALSE)#alpha/n
+ which(abs(rstudent(lm2)) >critval)
+```
+There is no outlier.  
+
+(5)
+```{r}
+which(cooks.distance(lm)>=1)
+```
+There is no influential point. And we can also get the same result from the `Residuals and Leverage` graph, there is no observation outside the contour line of cook's distance is 1.  
+
+(6) We can get the structure of the relationship using the `Residual versus Fitted` plot. As it seems that the line is getting more flat, so that we can say that after adding more predictors in the model, the relationship between response and the predictors become more linear.  
+
+##2.  
+(a)
+```{r}
+data("seatpos")
+full_model<-lm(hipcenter~.,data=seatpos)
+summary(full_model)
+```
+  
+(b) According to the result above, no variable appear to be significant based on the individual t-tests, since all the p value of their t test are much larger than 0.05; but the overall F-test is significant which means the overall model is significant.  
+
+(c)  
+```{r}
+vif(full_model)
+```
+As we can see from the above, `HtShoes` and `Ht` both have a very high VIF(much larger than 10) so that they might have a problem of collinearity.  
+
+(d)  
+```{r}
+reduced_model<-lm(hipcenter~ Age+Weight+Seated+Arm+Thigh+Leg,data=seatpos)
+summary(reduced_model)
+```
+  
+(e) According to the result above, `Leg` is significant based on the individual t-tests for its coefficients. And overall F-test (for all of the variables together) is significant, since the p-value is much smaller than 0.05.  
+
+(f)
+```{r}
+vif(reduced_model)
+```
+Using the threshold of 10, no variables in the new model have a VIF larger than 10.  
+
+##4
+(a)
+```{r}
+library(MASS)
+set.seed(1)
+I<-diag(5)
+J<-matrix(1,5,5)
+Sigma<-0.8*I+0.2*J
+Sigma
+X<-mvrnorm(n=100,rep(0,5),Sigma)
+X<-cbind(rep(1,100),X)
+head(X)
+```
+(b)
+```{r}
+set.seed(1)
+error_normal<-rnorm(90,mean = 0,sd=1)
+error_t<-rt(10, 100-6)
+error<-c(error_normal,error_t)
+index<-sample(1:100,size = 100)#random shuffle
+for (i in 1:100){
+  error[i]<-error[index[i]]
+} 
+error<-as.vector(error)
+beta<-matrix(c(0, 1, -1, 1, -1, 0),6,1)
+Y<-X%*%beta+error
+```
+(c)
+```{r}
+X_model<-X[,-1]
+mlm<-lm(Y~X_model)
+summary(mlm)
+```
+According to the result above, X1, X2, X3 and X4 all appear to be significant based on the individual t-tests, since all the p value of their t test are much smaller than 0.05. X5 is the only one which is not significant, and this is because when we generate the y, the beta corresponds to X5 is 0; The overall F-test is significant which means the overall model is significant.  
+
+(d-1) Check the constant variance assumption for the errors.
+```{r}
+par(mfrow = c(2,2))
+plot(mlm)
+```
+As we can see from the Scale-Location plot above, the line is flat overall,it just sinks a little in the middle, so that the constant variance assumption is overall satisfied in this model.  
+
+(d-2) Check the normality assumption.  
+As we can see from the Normal Q-Q plot above, the residuals looks like a straight line so that the normality assumption is satisfied.  
+
+(d-3) Check for large leverage points
+```{r}
+which(hatvalues(mlm)> 2*6/100)
+```
+Therefore, #6,32, 46, 50, 61, and #95 observations can be considered as the large leverage points.  
+
+(d-4) Check for outliers.
+```{r}
+critval <- qt(0.05/(2*nobs(mlm)), df=df.residual(mlm)-1, lower=FALSE)#alpha/n
+ which(abs(rstudent(mlm)) > critval)
+```
+Based on the result above, there is no outlier.  
+
+(d-5) Check for influential points.
+```{r}
+which(cooks.distance(mlm)>=1)
+```
+Based on the result above, there is no influential point.
+
+(d-6) Check the structure of the relationship between the predictors and the response  
+
+We can get the structure of the relationship using the `Residual versus Fitted` plot. As it seems that the line is not vary flat, so that the relationship between response and the predictors may not be simply linear.  
